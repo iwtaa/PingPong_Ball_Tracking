@@ -6,15 +6,16 @@ import queue
 from scipy import signal
 from skimage.measure import label, regionprops
 from ultralytics import YOLO
+import math
 
 sys.path.insert(0, '../External Repositories/deblatting_python')
-from deblatting import *
+from deblatting import estimateFMH
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", default=None, required=True)
-    parser.add_argument("--buffer", default=20, required=False)
+    parser.add_argument("--buffer", default=9, required=False)
     return parser.parse_args()
 
 
@@ -34,6 +35,7 @@ def main():
     counter = 0
     positions = []
     while ret:
+
         background += (img / args.buffer)
         img_buffer.put(img)
 
@@ -41,20 +43,21 @@ def main():
         masks[-1] = maskPersons(img, model)
         if counter >= args.buffer:
             mask = concatenateMasks(masks)
-
             background -= img_buffer.get() / args.buffer
-            positions.append([counter, estimateBlurredObjectPosition(img, background, mask=mask)])
+            new_pos = estimateBlurredObjectPosition(img, background, mask=mask)
+            if new_pos is not None:
+                positions.append([counter, new_pos])
 
             for index, item in enumerate(positions):
                 if index == len(positions) - 1:
-                    break
+                     break
                 if positions[index + 1][0] - item[0] < 5:
                     cv2.line(img, item[1], positions[index + 1][1], [0, 255, 0], 1)
 
             img = cv2.bitwise_and(img, img, mask=mask.astype(np.uint8) * 255)
-        cv2.imshow("test", img)
-        if cv2.waitKey(10) == 27:
-            break
+            cv2.imshow("test", img)
+            if cv2.waitKey(10) == 27:
+                break
 
         ret, img = cap.read()
         counter += 1
@@ -66,7 +69,7 @@ def fmo_detect_range(I, B, minarea=0.1, maxarea=50):
     labeled = label(dI)
     regions = regionprops(labeled)
     ind = -1
-    maxsol = 0
+    maxsol = 0.85
     for ki in range(len(regions)):
         x1, y1, x2, y2 = regions[ki].bbox
         '''and regions[ki].bbox[2] -  and regions[ki].bbox'''
@@ -76,7 +79,7 @@ def fmo_detect_range(I, B, minarea=0.1, maxarea=50):
                 maxsol = regions[ki].solidity
     if ind == -1:
         raise UnvalidTargetError("The target is not valid.")
-    print(regions[ind].bbox, regions[ind].area)
+    print(regions[ind].bbox, regions[ind].area, regions[ind].solidity)
     return regions[ind].bbox, regions[ind].minor_axis_length
 
 
@@ -152,7 +155,7 @@ def estimateBlurredObjectPosition(I, B, mask=None):
         ROI, diameter = detectROI(I, B, mask=mask)
         mask = estimateMaskTrajectory(I, B, ROI, diameter)
     except UnvalidTargetError:
-        return
+        return None
     return [sum(x) for x in zip(getMaskCenter(mask), (ROI[1], ROI[0]))]
 
 
