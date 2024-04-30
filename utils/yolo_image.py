@@ -2,14 +2,14 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 
-img = cv2.imread('../imagcrop.png')
-facteur = 2
+img = cv2.imread('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\utils\\Dataset_Training\\table tennis.v11i.yolov8\\valid\\images\\frames-project00281_png.rf.3903d218fb726a59a3272983d0f19241.jpg')
+facteur = 1
 
 if img is None:
     print("Image is unreachable. Make sure to enter a valid path.")
     exit(0)
 img = cv2.resize(img, (img.shape[1]*facteur, img.shape[0]*facteur), img, cv2.INTER_CUBIC)
-model = YOLO('../yolov8n.pt')
+model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\utils\\runs\\detect\\train4\\weights\\best.pt')
 objects = model.predict(img, imgsz=640, conf=0.3)
 for obj in objects:
     for i, box in enumerate(obj.boxes.xywh):

@@ -3,17 +3,18 @@ import cv2
 import numpy as np
 
 #video
-cap = cv2.VideoCapture("../footage_video/CoreView_178_Core2 05004035 3-4.mp4")
+cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\footage_video\\CoreView_178_Core2 05004035 3-4.mp4")
 facteur = 2
+
+#Detection
 
 if cap is None:
     print("Video is unreachable. Make sure to enter a valid path.")
     exit(0)
-
-while True:
-    ret,img = cap.read()
-    img = cv2.resize(img, (img.shape[1]*facteur, img.shape[0]*facteur), img, cv2.INTER_CUBIC)
-    model = YOLO('../yolov8n.pt')
+ret,img = cap.read()
+while ret:
+    print(ret)
+    model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\utils\\runs\\detect\\train4\\weights\\best.pt')
     objects = model.predict(img, imgsz=640, conf=0.3)
     for obj in objects:
         for i, box in enumerate(obj.boxes.xywh):
@@ -24,3 +25,4 @@ while True:
     cv2.imshow("temp", img)
     if cv2.waitKey(10) == 27:
         break
+    ret, img = cap.read()
