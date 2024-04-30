@@ -7,7 +7,6 @@ training_folder = ""
 validation_folder = ""
 tests_folder = ""
 
-
 sequences = os.listdir(data_folder)
 for sequence in sequences:
     print(sequence)
