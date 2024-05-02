@@ -21,3 +21,4 @@
   - Exclue les ROIs detecte trop grandes / trop petites // Approuve Methode 3
   - Etablissement d'autres parametres pour valider la detection d'une balle de ping pong (couleur?) Solidity ? Circulariry ?
 - DeFMO // Non concluant
+- 
