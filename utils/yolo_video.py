@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 #video
-cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\footage_video\\CoreView_178_Core2 05004035 3-4.mp4")
+cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\pingtracking\\playground\\deblurring\\DeFMO\\tsr2.avi")
 facteur = 2
 
 #Detection
@@ -14,7 +14,7 @@ if cap is None:
 ret,img = cap.read()
 while ret:
     print(ret)
-    model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\External Repositories\\best.pt')
+    model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\utils\\Dataset_Training\\best.pt')
     objects = model.predict(img, imgsz=640, conf=0.3)
     for obj in objects:
         for i, box in enumerate(obj.boxes.xywh):
