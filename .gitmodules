@@ -1,3 +1,6 @@
 [submodule "External Repositories/deblatting_python"]
 	path = External Repositories/deblatting_python
 	url = https://github.com/rozumden/deblatting_python.git
+[submodule "External Repositories/DeFMO"]
+	path = External Repositories/DeFMO
+	url = https://github.com/rozumden/DeFMO.git

@@ -8,16 +8,16 @@
 - Par soustraction du background (moyenne des frames precedentes) > ROI
 
 ### Autres
-- DeFMO (Rozmunyi I / kornia X) > image defloute
+- DeFMO (Rozmunyi I / kornia X) > image defloute // Non concluant
 - Deblattage > masque trajectoire / objet defloute
 
 ## Optimisations:
 - Yolov8 :
-  - Grossissement de l'objet pour une meilleur detection
+  - Grossissement de l'objet pour une meilleur detection // Non concluant
 - Detection de movement :
   - Limitation de la zone de recherche.
-    - Exclusion des personnes ou autres objets (Yolov8)
+    - Exclusion des personnes ou autres objets (Yolov8) // Approuve Methode 3
     - Focus sur une zone au-dessus de la table
-  - Exclue les ROIs detecte trop grandes / trop petites
+  - Exclue les ROIs detecte trop grandes / trop petites // Approuve Methode 3
   - Etablissement d'autres parametres pour valider la detection d'une balle de ping pong (couleur?) Solidity ? Circulariry ?
-- DeFMO
+- DeFMO // Non concluant

@@ -14,7 +14,7 @@ if cap is None:
 ret,img = cap.read()
 while ret:
     print(ret)
-    model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\utils\\runs\\detect\\train4\\weights\\best.pt')
+    model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\External Repositories\\best.pt')
     objects = model.predict(img, imgsz=640, conf=0.3)
     for obj in objects:
         for i, box in enumerate(obj.boxes.xywh):
