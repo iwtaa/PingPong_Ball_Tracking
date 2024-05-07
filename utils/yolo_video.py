@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 #video
-cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\pingtracking\\playground\\deblurring\\DeFMO\\tsr2.avi")
+cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\footage_video\\CoreView_178_Core2 05004035 3-4.mp4")
 facteur = 2
 
 #Detection
