@@ -1,82 +1,28 @@
 import sys
-import cv2
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import *
 from PyQt5.QtMultimediaWidgets import *
 
+sys.path.insert(1, '/envTest')
+from envTest.detection import detect
+from envTest.extract import extract
 
-def loadVideo():
-    video = []
-    cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\footage_video\\CoreView_178_Core2 05004035 3-4.mp4")
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgbImage.shape
-        bytesPerLine = ch * w
-        convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-        p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
-        video.append(p)
-
-    return video
-
-
-class VideoPlayer(QThread):
-    changePixmap = pyqtSignal(QImage)
-    frame = 0
-    video = None
-
-    def init(self, video):
-        self.video = video
-
-    def run(self):
-        while True:
-            self.nextFrame()
-            self.changePixmap.emit(self.video[self.frame])
-
-    def nextFrame(self):
-        if (self.frame + 1) < len(self.video):
-            self.frame += 1
-        print("next frame: " + str(self.frame))
-
-
-class VideoFrame(QWidget):
+class oldVideoFrame(QWidget):
     def __init__(self, parent=None):
-        super(VideoFrame, self).__init__(parent)
-
-        self.label = QLabel(self)
-        self.label.setGeometry(QRect(0, 50, 640, 480))
-        self.label.setStyleSheet("border: 1px solid;")
-
-        self.actionButtons = QFrame(self)
-        self.actionButtons.setGeometry(QRect(0, 0, 640, 50))
-        self.actionButtons_layout = QHBoxLayout()
-        self.actionButtons.setLayout(self.actionButtons_layout)
-        self.actionButtons_layout.setContentsMargins(0, 0, 0, 0)
-        self.actionButtons_layout.setSpacing(0)
-        self.temp1 = QPushButton("test1")
-        self.temp1.setMinimumHeight(50)
-        self.temp2 = QPushButton("test3")
-        self.temp2.setMinimumHeight(50)
-        self.temp3 = QPushButton("test2")
-        self.temp3.setMinimumHeight(50)
-        self.actionButtons_layout.addWidget(self.temp1)
-        self.actionButtons_layout.addWidget(self.temp2)
-        self.actionButtons_layout.addWidget(self.temp3)
-
-        # th = VideoPlayer(self)
-        # th.init(loadVideo())
-        # th.changePixmap.connect(self.setImage)
-        # th.start()
+        super(oldVideoFrame, self).__init__(parent)
+        self.openButton = QPushButton("Open Video", self)
+        self.openButton.setGeometry(QRect(self.width() - 70, self.height() - 24, 70, 24))
+        self.openButton.setToolTip("Open Video File")
+        self.openButton.setStatusTip("Open Video File")
+        self.openButton.setFixedHeight(24)
+        self.openButton.clicked.connect(self.openFile)
 
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
 
-        videoWidget = QVideoWidget(self)
-        videoWidget.setGeometry(0, 50, 640, 480)
+        self.videoWidget = QVideoWidget(self)
+        self.videoWidget.setGeometry(0, 0, 640, 456)
 
         self.playButton = QPushButton()
         self.playButton.setEnabled(False)
@@ -90,25 +36,15 @@ class VideoFrame(QWidget):
         self.error = QLabel()
         self.error.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
-        openButton = QPushButton("Open Video", self)
-        openButton.setGeometry(QRect(0, 600, 50, 50))
-        openButton.setToolTip("Open Video File")
-        openButton.setStatusTip("Open Video File")
-        openButton.setFixedHeight(24)
-        openButton.clicked.connect(self.openFile)
+        self.controlPanel = QFrame(self)
+        self.controlPanel.setGeometry(QRect(0, self.height() - 24, self.width() - 70, 24))
+        self.controlLayout = QHBoxLayout()
+        self.controlLayout.setContentsMargins(0, 0, 0, 0)
+        self.controlLayout.addWidget(self.playButton)
+        self.controlLayout.addWidget(self.positionSlider)
+        self.controlPanel.setLayout(self.controlLayout)
 
-        # Create a widget for window contents
-        wid = QWidget(self)
-        wid.setGeometry(QRect(0, 50, 620, 480))
-
-        # Create layouts to place inside widget
-        controlLayout = QHBoxLayout(self)
-        controlLayout.setGeometry(QRect(0, 530, 640, 100))
-        controlLayout.setContentsMargins(0, 0, 0, 0)
-        controlLayout.addWidget(self.playButton)
-        controlLayout.addWidget(self.positionSlider)
-
-        self.mediaPlayer.setVideoOutput(videoWidget)
+        self.mediaPlayer.setVideoOutput(self.videoWidget)
         self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
         self.mediaPlayer.durationChanged.connect(self.durationChanged)
@@ -154,9 +90,41 @@ class VideoFrame(QWidget):
         self.error.setText("Error: " + self.mediaPlayer.errorString())
 
 
-class ParameterFrame(QWidget):
+class oldMainFrame(QWidget):
     def __init__(self, parent=None):
-        super(ParameterFrame, self).__init__(parent)
+        super(oldMainFrame, self).__init__(parent)
+
+        self.label = QLabel(self)
+        self.label.setGeometry(QRect(0, 50, 640, 480))
+        self.label.setStyleSheet("border: 1px solid;")
+
+        self.actionButtons = QFrame(self)
+        self.actionButtons.setGeometry(QRect(0, 0, 640, 50))
+        self.actionButtons_layout = QHBoxLayout()
+        self.actionButtons.setLayout(self.actionButtons_layout)
+        self.actionButtons_layout.setContentsMargins(0, 0, 0, 0)
+        self.actionButtons_layout.setSpacing(0)
+        self.temp1 = QPushButton("test1")
+        self.temp1.setMinimumHeight(50)
+        self.temp2 = QPushButton("test3")
+        self.temp2.setMinimumHeight(50)
+        self.temp3 = QPushButton("test2")
+        self.temp3.setMinimumHeight(50)
+        self.actionButtons_layout.addWidget(self.temp1)
+        self.actionButtons_layout.addWidget(self.temp2)
+        self.actionButtons_layout.addWidget(self.temp3)
+
+        # th = VideoPlayer(self)
+        # th.init(loadVideo())
+        # th.changePixmap.connect(self.setImage)
+        # th.start()
+        self.wid = oldVideoFrame(self)
+        self.wid.setGeometry(QRect(0, 50, 640, 480))
+
+
+class oldParameterFrame(QWidget):
+    def __init__(self, parent=None):
+        super(oldParameterFrame, self).__init__(parent)
 
         self.frame = QFrame(self)
         self.layout = QHBoxLayout()
@@ -197,9 +165,9 @@ class ParameterFrame(QWidget):
         self.layout.addWidget(self.parameterTabs)
 
 
-class ConsoleLogFrame(QWidget):
+class oldConsoleLogFrame(QWidget):
     def __init__(self, parent=None):
-        super(ConsoleLogFrame, self).__init__(parent)
+        super(oldConsoleLogFrame, self).__init__(parent)
         self.resize(800, 120)
         self.scroll_area = QScrollArea(self)
         self.scroll_area.horizontalScrollBar().setEnabled(False)
@@ -213,22 +181,253 @@ class ConsoleLogFrame(QWidget):
         self.text.append(text)
 
 
-class MainWindow(QMainWindow):
+class OldMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.frame = QFrame(self)
+        file_bar = self.menuBar().addMenu("Files")
+        file_bar.addAction("Open Video")
+        file_bar.addAction("Open Treatment Chain")
 
-        self.resize(800, 650)
+        self.resize(800, 680)
 
-        self.video_frame = VideoFrame(self)
-        self.video_frame.setGeometry(0, 0, 640, 530)
-        self.parameter_frame = ParameterFrame(self)
-        self.parameter_frame.setGeometry(640, 0, 200, 530)
-        self.consolelog_frame = ConsoleLogFrame(self)
-        self.consolelog_frame.move(0, 530)
+        self.video_frame = oldMainFrame(self)
+        self.video_frame.setGeometry(0, 25, 640, 530)
+        self.parameter_frame = oldParameterFrame(self)
+        self.parameter_frame.setGeometry(640, 25, 200, 530)
+        self.consolelog_frame = oldConsoleLogFrame(self)
+        self.consolelog_frame.move(0, 555)
 
         self.setCentralWidget(self.frame)
+
+
+class MediaPlayer(QWidget):
+    def __init__(self, parent=None):
+        super(MediaPlayer, self).__init__(parent)
+
+        self.setGeometry(0, 0, 640, 480)
+
+        self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+
+        self.videoWidget = QVideoWidget(self)
+        self.videoWidget.setGeometry(0, 0, 640, 480)
+        self.setStyleSheet("border: 1px solid;")
+        p = self.videoWidget.palette()
+        p.setColor(self.videoWidget.backgroundRole(), Qt.black)
+        self.videoWidget.setPalette(p)
+
+        # Control Bar Elements
+        self.playButton = QPushButton()
+        self.playButton.setEnabled(False)
+        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.playButton.clicked.connect(self.play)
+
+        self.positionSlider = QSlider(Qt.Horizontal)
+        self.positionSlider.setRange(0, 0)
+        self.positionSlider.sliderMoved.connect(self.set_position)
+
+        self.error = QLabel()
+        self.error.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+        self.controlPanel = QFrame(self)
+        self.controlPanel.setGeometry(QRect(0, self.height() - 24, self.width(), 24))
+        self.controlLayout = QHBoxLayout()
+        self.controlLayout.setContentsMargins(0, 0, 0, 0)
+        self.controlLayout.addWidget(self.playButton)
+        self.controlLayout.addWidget(self.positionSlider)
+        self.controlPanel.setLayout(self.controlLayout)
+
+        self.mediaPlayer.setVideoOutput(self.videoWidget)
+        self.mediaPlayer.stateChanged.connect(self.media_state_changed)
+        self.mediaPlayer.positionChanged.connect(self.position_changed)
+        self.mediaPlayer.durationChanged.connect(self.duration_changed)
+        self.mediaPlayer.error.connect(self.handle_error)
+
+    def open_file(self):
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
+                                                  QDir.homePath())
+
+        if fileName != '':
+            self.mediaPlayer.setMedia(
+                QMediaContent(QUrl.fromLocalFile(fileName)))
+            self.playButton.setEnabled(True)
+
+    @staticmethod
+    def exit_call():
+        sys.exit(app.exec_())
+
+    def play(self):
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+            self.mediaPlayer.pause()
+        else:
+            self.mediaPlayer.play()
+
+    def media_state_changed(self):
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+            self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+        else:
+            self.playButton.setIcon(
+                self.style().standardIcon(QStyle.SP_MediaPlay))
+
+    def position_changed(self, position):
+        self.positionSlider.setValue(position)
+
+    def duration_changed(self, duration):
+        self.positionSlider.setRange(0, duration)
+
+    def set_position(self, position):
+        self.mediaPlayer.set_position(position)
+
+    def handle_error(self):
+        self.playButton.setEnabled(False)
+        self.error.setText("Error: " + self.mediaPlayer.errorString())
+
+
+class VideoFrame(QWidget):
+    def __init__(self, parent=None):
+        super(VideoFrame, self).__init__(parent)
+
+        self.mediaPlayer = MediaPlayer(self)
+
+
+class ParametersFrame(QWidget):
+    def __init__(self, parent=None):
+        super(ParametersFrame, self).__init__(parent)
+
+        self.tabs = QTabWidget(self)
+
+        self.tab1 = QFrame(self.tabs)
+        self.tab2 = QFrame(self.tabs)
+        self.tab1_layout = QVBoxLayout()
+        self.tab2_layout = QVBoxLayout()
+        self.tab1.setLayout(self.tab1_layout)
+        self.tab2.setLayout(self.tab2_layout)
+        self.tab1_layout.setContentsMargins(0, 0, 0, 0)
+        self.tab1_layout.setSpacing(0)
+        self.tab2_layout.setContentsMargins(0, 0, 0, 0)
+        self.tab2_layout.setSpacing(0)
+
+        self.temp1 = QLabel("test1")
+        self.temp2 = QLabel("test2")
+        self.temp3 = QLabel("test3")
+        self.temp4 = QLabel("test4")
+        self.temp5 = QLabel("test5")
+        self.temp6 = QLabel("test6")
+        self.temp7 = QLabel("test7")
+        self.temp8 = QLabel("test8")
+
+        self.tab1_layout.addWidget(self.temp1)
+        self.tab1_layout.addWidget(self.temp2)
+        self.tab1_layout.addWidget(self.temp3)
+        self.tab2_layout.addWidget(self.temp4)
+        self.tab2_layout.addWidget(self.temp5)
+        self.tab2_layout.addWidget(self.temp6)
+        self.tab2_layout.addWidget(self.temp7)
+        self.tab2_layout.addWidget(self.temp8)
+
+
+class Processus(QWidget):
+    def __init__(self, parent=None):
+        super(Processus, self).__init__(parent)
+
+        self.layout = QGridLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.setLayout(self.layout)
+
+        self.name = QLabel("temp")
+        self.button = QPushButton(">")
+        self.parameterLayout = QVBoxLayout()
+
+        self.layout.addWidget(self.name, 0, 0)
+        self.layout.addWidget(self.button, 0, 1)
+        self.layout.addLayout(self.parameterLayout, 1, 0, 2, 4)
+        self.layout.setColumnStretch(0, 3)
+        self.layout.setColumnStretch(1, 1)
+        self.layout.setRowStretch(0, 1)
+        self.layout.setRowStretch(1, 3)
+
+    def init_values(self, name, function, parameters):
+        self.name.setText(name)
+        self.button.clicked.connect(function)
+
+        for parameter in parameters:
+            item_layout = QHBoxLayout()
+            if parameter[1] == "checkbox":
+                new_param = QCheckBox(parameter[0])
+                item_layout.addWidget(new_param)
+            elif parameter[1] == "slider":
+                new_param = QSlider(Qt.Orientation.Horizontal)
+                item_layout.addWidget(QLabel(parameter[0]))
+                item_layout.addWidget(new_param)
+            elif parameter[1] == "textinput":
+                new_param = QTextEdit()
+                item_layout.addWidget(new_param)
+            self.parameterLayout.addLayout(item_layout)
+
+
+class ProcessFrame(QWidget):
+    def __init__(self, parent=None):
+        super(ProcessFrame, self).__init__(parent)
+
+        # Window init
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(15)
+        self.setLayout(self.layout)
+
+        # Temporary
+        fileOpenParams = [
+            ["temp", "checkbox"],
+            ["temp3", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp4", "checkbox"],
+            ["temp5", "slider"]
+        ]
+
+        # Initialising all modules
+        self.fileProcess = Processus(self)
+        self.trackProcess = Processus(self)
+        self.trajProcess = Processus(self)
+        self.fileProcess.init_values("Load Video", parent.videoFrame.mediaPlayer.open_file, fileOpenParams)
+        self.trackProcess.init_values("Track", detect, [])
+        self.trajProcess.init_values("Extract Trajectory", extract, [])
+
+        self.layout.addWidget(self.fileProcess)
+        self.layout.addWidget(self.trackProcess)
+        self.layout.addWidget(self.trajProcess)
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+        # Window init
+        self.resize(894, 659)
+
+        # Frames
+        self.videoFrame = VideoFrame(self)
+        self.parametersFrame = ParametersFrame(self)
+        self.processFrame = ProcessFrame(self)
+        self.videoFrame.setGeometry(15, 40, 640, 480)
+        self.parametersFrame.setGeometry(670, 40, 209, 480)
+        self.processFrame.setGeometry(15, 536, 864, 100)
+
+        # Menus
+        # self.menu_files = self.menuBar().addMenu("Files")
+        # self.menu_files.addAction("Open Video")
+        self.toolbar = QToolBar("test")
+        self.addToolBar(self.toolbar)
+
+        openfile_action = QAction("Open File", self)
+        openfile_action.triggered.connect(self.videoFrame.mediaPlayer.open_file)
+        self.toolbar.addAction(openfile_action)
 
 
 if __name__ == "__main__":
