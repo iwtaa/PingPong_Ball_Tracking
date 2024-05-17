@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 #video
-cap = cv2.VideoCapture("C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\footage_video\\CoreView_178_Core2 05004035 3-4.mp4")
+cap = cv2.VideoCapture(r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\footage_video\CoreView_178_Core2 05004035 3-4.mp4")
 facteur = 1
 
 #Detection
@@ -13,7 +13,7 @@ if cap is None:
 ret,img = cap.read()
 
 while ret:
-    model = YOLO('C:\\Users\\invite\\PycharmProjects\\PingPong_Ball_Tracking\\utils\\runs\\detect\\train6\\weights\\best.pt')
+    model = YOLO(r'C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\utils\runs\detect\train6\weights\best.pt')
     results = model.track(img, imgsz=1088, conf=0.3, persist=True)
     annotated_img = results[0].plot()
     #for obj in objects:
