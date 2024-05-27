@@ -1,0 +1,10 @@
+Video Player
+Visualisation features:
+    3D Graphics superposed on video:
+        Vectors
+        Trajectories
+        Spin
+Treatment chain use:
+    Parameters customization
+    Load/Save results file
+    Manually annote/modify results

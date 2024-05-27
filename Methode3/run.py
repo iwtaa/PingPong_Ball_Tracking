@@ -14,7 +14,7 @@ from deblatting import estimateFMH
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video", default=None, required=True)
+    parser.add_argument("--video", default=r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\footage_video\CoreView_178_Core2 05004035 3-4.mp4", required=False)
     parser.add_argument("--buffer", default=9, required=False)
     return parser.parse_args()
 
