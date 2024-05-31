@@ -140,7 +140,12 @@ def estimateMaskTrajectory(I, B, ROI, diameter):
         raise UnvalidTargetError("The target is not valid.")
     M0 = np.ones([int(np.round(diameter))] * 2)
     H, F, M = estimateFMH(I, B, M0)
+    cv2.imwrite("testing.jpg", (H * 255).astype(np.uint8)*10)
     H = np.where(H == 0., H, 1.0)
+    cv2.imwrite("testing2.jpg", (M*255).astype(np.uint8))
+    cv2.imwrite("testing3.jpg", (F*255).astype(np.uint8))
+    cv2.imwrite("testing4.jpg", (I * 255).astype(np.uint8))
+    print(H)
     return H.astype(np.uint8)
 
 

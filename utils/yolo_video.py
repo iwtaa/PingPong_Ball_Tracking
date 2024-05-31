@@ -21,10 +21,13 @@ else:
 
 points = []
 frames = []
-
-while ret:
-    model = YOLO(r'C:\Users\invite\Downloads\train259\weights\best.pt')
-    objects = model.predict(img, imgsz=size, conf=0.3)
+model = YOLO(r'C:\Users\invite\Downloads\train259\weights\best.pt')
+counter = 100
+while ret and counter != 0:
+    counter -= 1
+    img = img[:640, 1280:, :]
+    print(img.shape)
+    objects = model.predict(img, imgsz=640, conf=0.01)
     for obj in objects:
         for i, box in enumerate(obj.boxes.xywh):
             x, y, w, h = np.array(box.tolist()).astype(int)
@@ -35,7 +38,8 @@ while ret:
             for point in points:
                 cv2.circle(img, point, radius=0, color=(0, 0, 255), thickness=2)
     frames.append(img)
-    # cv2.imshow("temp", img)
+    cv2.imshow("temp", img)
+
     if cv2.waitKey(1) == 27:
         break
     ret, img = cap.read()

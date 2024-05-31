@@ -4,11 +4,11 @@ import os
 import random
 import shutil
 
-intensity_range = (2, 10)
+intensity_range = (20, 60)
 orientation_range = (0, 180)
 
-images_folder = r"C:\Users\invite\Downloads\imagenet-1k_tennis-table-ball.v6i.yolov8 - Copie\valid\images"
-labels_folder = r"C:\Users\invite\Downloads\imagenet-1k_tennis-table-ball.v6i.yolov8 - Copie\valid\labels"
+images_folder = r"C:\Users\invite\Downloads\imagenet-1k_tennis-table-ball.v6i.yolov8 - Copie (2)\valid\images"
+labels_folder = r"C:\Users\invite\Downloads\imagenet-1k_tennis-table-ball.v6i.yolov8 - Copie (2)\valid\labels"
 
 images = os.listdir(images_folder)
 counter = 0

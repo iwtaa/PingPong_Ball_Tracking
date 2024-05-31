@@ -2,202 +2,158 @@ import sys
 
 from PyQt5 import QtWidgets, QtCore, QtGui, QtMultimedia, QtMultimediaWidgets
 
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
+import cv2
 
 sys.path.insert(1, '/envTest')
 from envTest.detection import detect
 from envTest.extract import extract
 
-
-# class MediaPlayer(QtWidgets.QWidget):
-#     def __init__(self, logger, parent=None):
-#         super(MediaPlayer, self).__init__(parent)
-#
-#         self.setGeometry(0, 0, 640, 480)
-#
-#         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-#
-#         self.videoWidget = QVideoWidget(self)
-#         self.videoWidget.setGeometry(0, 0, 640, 480)
-#         # self.setStyleSheet("border: 1px solid;")
-#         # p = self.videoWidget.palette()
-#         # p.setColor(self.videoWidget.backgroundRole(), QtCore.Qt.black)
-#         # self.videoWidget.setPalette(p)
-#
-#         # Control Bar Elements
-#         self.playButton = QtWidgets.QPushButton()
-#         self.playButton.setEnabled(False)
-#         self.playButton.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
-#         self.playButton.clicked.connect(self.play)
-#
-#         self.rateUp = QtWidgets.QPushButton()
-#         self.rateUp.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSeekForward))
-#         self.rateUp.clicked.connect(self.rate_up)
-#         self.rateDown = QtWidgets.QPushButton()
-#         self.rateDown.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaSeekBackward))
-#         self.rateDown.clicked.connect(self.rate_down)
-#         self.rate = 1.0
-#         self.rateLabel = QtWidgets.QLabel('x' + "%.1f" % self.rate)
-#
-#         self.positionSlider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-#         self.positionSlider.setRange(0, 0)
-#         self.positionSlider.sliderMoved.connect(self.set_position)
-#
-#         self.error = QtWidgets.QLabel()
-#         self.error.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
-#
-#         self.controlPanel = QtWidgets.QFrame(self)
-#         self.controlPanel.setGeometry(QtCore.QRect(0, self.height() - 24, self.width(), 24))
-#         self.controlLayout = QtWidgets.QHBoxLayout()
-#         self.controlLayout.setContentsMargins(0, 0, 0, 0)
-#         self.controlLayout.addWidget(self.playButton)
-#         self.controlLayout.addWidget(self.positionSlider)
-#         self.controlLayout.addWidget(self.rateDown)
-#         self.controlLayout.addWidget(self.rateLabel)
-#         self.controlLayout.addWidget(self.rateUp)
-#
-#         self.controlPanel.setLayout(self.controlLayout)
-#
-#         self.mediaPlayer.setVideoOutput(self.videoWidget)
-#         self.mediaPlayer.stateChanged.connect(self.media_state_changed)
-#         self.mediaPlayer.positionChanged.connect(self.position_changed)
-#         self.mediaPlayer.durationChanged.connect(self.duration_changed)
-#         self.mediaPlayer.error.connect(self.handle_error)
-#
-#     def open_file(self):
-#         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Movie",
-#                                                             r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\footage_video")
-#
-#         if fileName != '':
-#             self.mediaPlayer.setMedia(
-#                 QMediaContent(QtCore.QUrl.fromLocalFile(fileName)))
-#             self.playButton.setEnabled(True)
-#
-#     @staticmethod
-#     def exit_call():
-#         sys.exit(app.exec_())
-#
-#     def play(self):
-#         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
-#             self.mediaPlayer.pause()
-#         else:
-#             self.mediaPlayer.play()
-#
-#     def rate_up(self):
-#         self.rate += 0.1
-#         self.mediaPlayer.setPlaybackRate(self.rate)
-#         self.rateLabel.setText('x' + "%.1f" % self.rate)
-#
-#     def rate_down(self):
-#         self.rate -= 0.1
-#         if self.rate < 0.1:
-#             self.rate = 0.1
-#         self.mediaPlayer.setPlaybackRate(self.rate)
-#         self.rateLabel.setText('x' + "%.1f" % self.rate)
-#
-#     def media_state_changed(self):
-#         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
-#             self.playButton.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaPause))
-#         else:
-#             self.playButton.setIcon(
-#                 self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
-#
-#     def position_changed(self, position):
-#         self.positionSlider.setValue(position)
-#
-#     def duration_changed(self, duration):
-#         self.positionSlider.setRange(0, duration)
-#
-#     def set_position(self, position):
-#         self.mediaPlayer.set_position(position)
-#
-#     def handle_error(self):
-#         self.playButton.setEnabled(False)
-#         self.error.setText("Error: " + self.mediaPlayer.errorString())
-#
-#
-# class VideoFrame(QtWidgets.QWidget):
-#     def __init__(self, logger, parent=None):
-#         super(VideoFrame, self).__init__(parent)
-#         self.logger = logger
-#
-#         self.mediaPlayer = MediaPlayer(logger, self)
-#
-#         self.frame = QtWidgets.QFrame(self)
-#         # self.mediaPlayer.hide()
-#
-#         self.fig = plt.figure(figsize=(8, 8))
-#         ax = plt.axes(projection='3d')
-#         import numpy as np
-#         from scipy import signal
-#         t = np.linspace(0, 1, 1000, endpoint=True)
-#         ax.plot3D(t, signal.square(2 * np.pi * 5 * t))
-#
-#         ax.patch.set_alpha(0.0)
-#         ax.set_axis_off()
-#         self.fig.patch.set_alpha(0.0)
-#
-#         self.canvas = FigureCanvas(self.fig)
-#         self.canvas.setStyleSheet("background: transparent;")
-#
-#         self.frame.setLayout(QtWidgets.QVBoxLayout())
-#         self.frame.layout().addWidget(self.canvas)
-#         self.frame.setStyleSheet("background: transparent;")
-#
+import time
 
 
-class VideoFrame(QtWidgets.QWidget):
-    def __init__(self, logger, parent=None):
-        super(VideoFrame, self).__init__(parent)
-        self.resize(640, 480)
+data = {}
 
-        self.scene = QtWidgets.QGraphicsScene()
-        self.view = QtWidgets.QGraphicsView(self.scene, self)
-        self.videoItem = QtMultimediaWidgets.QGraphicsVideoItem()
-        self.scene.addItem(self.videoItem)
 
-        self.view.setInteractive(False)
+class MediaPlayer(QtCore.QThread):
+    frames = []
+    frame = 0
+    paused = True
+    pixmapChange = QtCore.pyqtSignal(QtGui.QPixmap)
 
-        fig = plt.figure(figsize=(31, 23), dpi=20)
-        ax = plt.axes(projection='3d')
-        import numpy as np
-        from scipy import signal
-        t = np.linspace(0, 1, 1000, endpoint=True)
-        ax.plot3D(t, signal.square(2 * np.pi * 5 * t))
-        ax.patch.set_alpha(0.0)
-        ax.set_axis_off()
-        fig.patch.set_alpha(0.0)
-        canvas = FigureCanvas(fig)
+    def __init__(self, frame_next_signal, frame_back_signal, pause_signal, fig, ax, parent=None):
+        super(MediaPlayer, self).__init__(parent)
+        frame_next_signal.connect(self.frame_next)
+        frame_back_signal.connect(self.frame_back)
+        pause_signal.connect(self.pause)
+        self.fig = fig
+        self.ax = ax
+
+    def run(self):
+        while True:
+            self.play()
+
+    def play(self):
+        if not self.paused:
+            self.setFrame(self.frame + 1)
+
+    def setFrame(self, value):
+        if value < 0 or value >= len(self.frames):
+            self.pause()
+            self.frame = 0
+        else:
+            self.frame = self.frame + 1
+            self.draw_frame()
+
+    def pause(self):
+        if self.paused:
+            self.paused = False
+        else:
+            self.paused = True
+
+    def frame_back(self):
+        self.paused = True
+        if self.frame != 0:
+            self.setFrame(self.frame - 1)
+
+    def frame_next(self):
+        self.paused = True
+        if self.frame != len(self.frames) - 1:
+            self.setFrame(self.frame + 1)
+
+    def get_fx_pixmap(self):
+        self.ax.clear()
+        self.ax.scatter(x=[10, 20, 30, 40, 50, 60, 70, 80], y=[10, 20, 30, 40, 50, 60, 70, 80], s=200, c='r')
+
+        plt.ylim(0, 480)
+        plt.xlim(0, 640)
+        plt.gca().invert_yaxis()
+        self.ax.set_axis_off()
+        self.ax.patch.set_alpha(0.0)
+        self.fig.patch.set_alpha(0.0)
+
+        canvas = FigureCanvas(self.fig)
         canvas.draw()
-        pixmap = QtGui.QPixmap(QtGui.QImage(canvas.buffer_rgba(), canvas.size().width(), canvas.size().height(),
-                                            QtGui.QImage.Format_ARGB32))
-        self.scene.addPixmap(pixmap)
+        image = QtGui.QImage(canvas.buffer_rgba(), canvas.size().width(), canvas.size().height(),
+                                          QtGui.QImage.Format_ARGB32)
+        return QtGui.QPixmap(image)
 
-        self.mediaPlayer = QtMultimedia.QMediaPlayer(self, QtMultimedia.QMediaPlayer.VideoSurface)
-        self.mediaPlayer.setVideoOutput(self.videoItem)
+    def get_frame_pixmap(self):
+        return self.convert_nparray_to_QPixmap(self.frames[self.frame]).scaled(640, 480, QtCore.Qt.KeepAspectRatio)
 
-        self.view.resize(640, 480)
-        self.videoItem.setPos(0, 0)
-        self.videoItem.setScale(1.8)
-        self.view.show()
+    def draw_frame(self):
+        self.pixmapChange.emit(self.join_pixmap(self.get_frame_pixmap(), self.get_fx_pixmap()))
+
+    def convert_nparray_to_QPixmap(self, img):
+        h, w, ch = img.shape
+        # Convert resulting image to pixmap
+        if img.ndim == 1:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        qimg = QtGui.QImage(img.data, w, h, w * ch, QtGui.QImage.Format_BGR888)
+        qpixmap = QtGui.QPixmap(qimg)
+        return qpixmap
+
+    def join_pixmap(self, p1, p2, mode=QtGui.QPainter.CompositionMode_SourceOver):
+        s = p1.size().expandedTo(p2.size())
+        result = QtGui.QPixmap(s)
+        result.fill(QtCore.Qt.transparent)
+        painter = QtGui.QPainter(result)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.drawPixmap(QtCore.QPoint(), p1)
+        painter.setCompositionMode(mode)
+        painter.drawPixmap(result.rect(), p2, p2.rect())
+        painter.end()
+        return result
+
+    def set_video(self, video):
+        self.frames = video
+        self.paused = True
+        self.setFrame(0)
 
 
-    def open_file(self):
+class VideoPlayer(QtWidgets.QWidget):
+    frame_next_signal = QtCore.pyqtSignal()
+    frame_back_signal = QtCore.pyqtSignal()
+    pause_signal = QtCore.pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(VideoPlayer, self).__init__(parent)
+
+        fig, ax = plt.subplots(figsize=(32, 24), dpi=20)
+
+        self.mediaPlayer = MediaPlayer(self.frame_next_signal, self.frame_back_signal, self.pause_signal, fig, ax, self)
+        self.mediaPlayer.pixmapChange.connect(self.set_pixmap)
+        self.mediaPlayer.start()
+
+        self.label = QtWidgets.QLabel(self)
+        self.label.setGeometry(0, 0, 640, 480)
+
+    @QtCore.pyqtSlot(QtGui.QPixmap)
+    def set_pixmap(self, pixmap):
+        self.label.setPixmap(pixmap)
+
+    def open_file(self, value="no value"):
+        print(value)
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Movie",
                                                             r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\footage_video")
         if fileName != '':
-            self.mediaPlayer.setMedia(
-                QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(fileName)))
+            t = time.time()
+            video = cv2.VideoCapture(fileName)
+            frames = []
+            ret, img = video.read()
 
-    def play(self):
-        if self.mediaPlayer.state() == QtMultimedia.QMediaPlayer.PlayingState:
-            self.mediaPlayer.pause()
-        else:
-            self.mediaPlayer.play()
-
-
+            counter = 30
+            while ret and counter > 0:
+                counter -= 1
+                frames.append(img)
+                ret, img = video.read()
+            print("open_file : ", time.time() - t)
+            self.mediaPlayer.set_video(frames)
+            return frames
+        return None
 
 
 
@@ -257,9 +213,50 @@ class Console(QtWidgets.QTextEdit):
         self.append(text + '\n')
 
 
+class ProgressTracker:
+    progress = 0.0
+    state = "waiting"
+
+    def set_progress(self, value):
+        self.progress = value
+        if self.progress >= 1.0:
+            state = "waiting"
+
+    def get_progress(self):
+        return self.progress
+
+    def is_progressing(self):
+        if self.state == "progressing":
+            return True
+        else:
+            return False
+
+    def start(self):
+        self.state = "progressing"
+        self.progress = 0.0
+
+
+class ProcessThread(QtCore.QObject):
+    processList = []
+    progress_tracker = ProgressTracker()
+
+    def run(self):
+        while True:
+            if not self.progress_tracker.is_progressing():
+                self.progress_tracker.start()
+
+    def add_processes(self, processes):
+        for process in processes:
+            self.processList.append(process)
+
+
 class Processus(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Processus, self).__init__(parent)
+
+        self.function = None
+        self.parameters = None
+        self.return_name = None
 
         self.layout = QtWidgets.QGridLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -278,23 +275,35 @@ class Processus(QtWidgets.QWidget):
         self.layout.setRowStretch(0, 1)
         self.layout.setRowStretch(1, 3)
 
-    def init_values(self, name, function, parameters):
+    def init_values(self, name, function, parameters, settings, return_name):
         self.name.setText(name)
-        self.button.clicked.connect(function)
+        self.function = function
+        self.parameters = parameters
+        self.return_name = return_name
+        self.button.clicked.connect(self.start)
 
-        for parameter in parameters:
+        for setting in settings:
             item_layout = QtWidgets.QHBoxLayout()
-            if parameter[1] == "checkbox":
-                new_param = QtWidgets.QCheckBox(parameter[0])
+            if setting[1] == "checkbox":
+                new_param = QtWidgets.QCheckBox(setting[0])
                 item_layout.addWidget(new_param)
-            elif parameter[1] == "slider":
+            elif setting[1] == "slider":
                 new_param = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
-                item_layout.addWidget(QtWidgets.QLabel(parameter[0]))
+                item_layout.addWidget(QtWidgets.QLabel(setting[0]))
                 item_layout.addWidget(new_param)
-            elif parameter[1] == "textinput":
+            elif setting[1] == "textinput":
                 new_param = QtWidgets.QTextEdit()
                 item_layout.addWidget(new_param)
             self.parameterLayout.addLayout(item_layout)
+
+    def start(self):
+        params = []
+        for parameter in self.parameters:
+            if parameter not in data:
+                print("Function doesn't have all nescessary parameters to work")
+                return
+            params.append(data[parameter])
+        data[self.return_name] = self.function(*params)
 
 
 class ProcessFrame(QtWidgets.QWidget):
@@ -315,14 +324,14 @@ class ProcessFrame(QtWidgets.QWidget):
             ["temp4", "checkbox"],
             ["temp5", "slider"]
         ]
-
+        data["tempparam"] = "testingparameters"
         # Initialising all modules
         self.fileProcess = Processus(self)
         self.trackProcess = Processus(self)
         self.trajProcess = Processus(self)
-        self.fileProcess.init_values("Load Video", parent.videoFrame.open_file, fileOpenParams)
-        self.trackProcess.init_values("Track", detect, [])
-        self.trajProcess.init_values("Extract Trajectory", extract, [])
+        self.fileProcess.init_values("Load Video", parent.videoFrame.open_file, ["tempparam"], fileOpenParams, "frames")
+        self.trackProcess.init_values("Track", detect, ["frames"], [], "detects")
+        self.trajProcess.init_values("Extract Trajectory", extract, [], [], "")
 
         self.layout.addWidget(self.fileProcess)
         self.layout.addWidget(self.trackProcess)
@@ -339,7 +348,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Frames
         self.parametersFrame = ParametersFrame(self)
         logger = self.parametersFrame.console.log
-        self.videoFrame = VideoFrame(logger, self)
+        self.videoFrame = VideoPlayer(self)
         self.processFrame = ProcessFrame(logger, self)
         self.videoFrame.setGeometry(15, 40, 640, 480)
         self.parametersFrame.setGeometry(670, 40, 209, 480)
@@ -355,14 +364,21 @@ class MainWindow(QtWidgets.QMainWindow):
         openfile_action.triggered.connect(self.videoFrame.open_file)
         self.toolbar.addAction(openfile_action)
 
-    def keyPressEvent(self, e):
+    def keyPressEvent(self, e, **kwargs):
         if e.key() == QtCore.Qt.Key_E:
-            self.videoFrame.play()
+            self.videoFrame.pause_signal.emit()
         elif e.key() == QtCore.Qt.Key_R:
             self.videoFrame.open_file()
+        elif e.key() == QtCore.Qt.Key_D:
+            print("testing")
+            self.videoFrame.frame_back_signal.emit()
+        elif e.key() == QtCore.Qt.Key_F:
+            print("testing2")
+            self.videoFrame.frame_next_signal.emit()
 
 
 if __name__ == "__main__":
+    plt.switch_backend('agg')
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.setWindowTitle("Application")
