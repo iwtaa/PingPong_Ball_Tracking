@@ -7,6 +7,10 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import cv2
+import numpy as np
+from matplotlib import cm
+
+from mpl_toolkits.mplot3d import Axes3D
 
 sys.path.insert(1, '/envTest')
 from envTest.detection import detect
@@ -66,11 +70,18 @@ class MediaPlayer(QtCore.QThread):
 
     def get_fx_pixmap(self):
         self.ax.clear()
-        self.ax.scatter(x=[10, 20, 30, 40, 50, 60, 70, 80], y=[10, 20, 30, 40, 50, 60, 70, 80], s=200, c='r')
 
-        plt.ylim(0, 480)
-        plt.xlim(0, 640)
-        plt.gca().invert_yaxis()
+        # Make data
+        X = np.arange(-5, 5, 0.25)
+        Y = np.arange(-5, 5, 0.25)
+        X, Y = np.meshgrid(X, Y)
+        R = np.sqrt(X ** 2 + Y ** 2)
+        Z = np.sin(R)
+        self.ax.plot_surface(X, Y, Z, vmin=Z.min() * 2, cmap=cm.Blues)
+
+        #plt.ylim(0, 480)
+        #plt.xlim(0, 640)
+        #plt.gca().invert_yaxis()
         self.ax.set_axis_off()
         self.ax.patch.set_alpha(0.0)
         self.fig.patch.set_alpha(0.0)
@@ -122,7 +133,8 @@ class VideoPlayer(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(VideoPlayer, self).__init__(parent)
 
-        fig, ax = plt.subplots(figsize=(32, 24), dpi=20)
+        fig, ax = plt.subplots(figsize=(32, 24), dpi=20, subplot_kw={"projection": "3d"})
+        #fig, ax = plt.subplots(figsize=(32, 24), dpi=20)
 
         self.mediaPlayer = MediaPlayer(self.frame_next_signal, self.frame_back_signal, self.pause_signal, fig, ax, self)
         self.mediaPlayer.pixmapChange.connect(self.set_pixmap)
