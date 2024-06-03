@@ -4,3 +4,6 @@
 [submodule "External Repositories/DeFMO"]
 	path = External Repositories/DeFMO
 	url = https://github.com/rozumden/DeFMO.git
+[submodule "External Repositories/sort"]
+	path = External Repositories/sort
+	url = https://github.com/abewley/sort
