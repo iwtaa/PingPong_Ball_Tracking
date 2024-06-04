@@ -18,7 +18,6 @@ from envTest.extract import extract
 
 import time
 
-
 data = {}
 
 
@@ -43,6 +42,8 @@ class MediaPlayer(QtCore.QThread):
     def play(self):
         if not self.paused:
             self.setFrame(self.frame + 1)
+        else:
+            time.sleep(0.3)
 
     def setFrame(self, value):
         if value < 0 or value >= len(self.frames):
@@ -71,26 +72,39 @@ class MediaPlayer(QtCore.QThread):
     def get_fx_pixmap(self):
         self.ax.clear()
 
-        # Make data
-        X = np.arange(-5, 5, 0.25)
-        Y = np.arange(-5, 5, 0.25)
-        X, Y = np.meshgrid(X, Y)
-        R = np.sqrt(X ** 2 + Y ** 2)
-        Z = np.sin(R)
-        self.ax.plot_surface(X, Y, Z, vmin=Z.min() * 2, cmap=cm.Blues)
+        if "detections" in data:
+            xlist = [0, 0, 640, 640]
+            ylist = [0, 480, 0, 480]
+            for detected in data['detections']:
+                for object in detected:
+                    x1, y1, x2, y2, id = object
+                    h = y2 - y1
+                    w = int(x2 - x1)
+                    y = int(y1 + w/2)
+                    x = int(x1 + h/2)
+                    ho, wo = data['size']
+                    print(wo, ho)
+                    xfinal = int(x * 640 / wo)
+                    yfinal = int(y * 360 / ho)
+                    xlist.append(xfinal)
+                    ylist.append(yfinal)
+            X = np.array(xlist)
+            Y = np.array(ylist)
+            print(X, Y)
+            plt.scatter(X, Y, s=100, c='cyan')
+            plt.ylim(0, 480)
+            plt.xlim(0, 640)
+            plt.gca().invert_yaxis()
+            self.ax.patch.set_alpha(0.0)
+            self.fig.patch.set_alpha(0.0)
 
-        #plt.ylim(0, 480)
-        #plt.xlim(0, 640)
-        #plt.gca().invert_yaxis()
-        self.ax.set_axis_off()
-        self.ax.patch.set_alpha(0.0)
-        self.fig.patch.set_alpha(0.0)
-
-        canvas = FigureCanvas(self.fig)
-        canvas.draw()
-        image = QtGui.QImage(canvas.buffer_rgba(), canvas.size().width(), canvas.size().height(),
-                                          QtGui.QImage.Format_ARGB32)
-        return QtGui.QPixmap(image)
+            canvas = FigureCanvas(self.fig)
+            canvas.draw()
+            image = QtGui.QImage(canvas.buffer_rgba(), canvas.size().width(), canvas.size().height(),
+                                              QtGui.QImage.Format_ARGB32)
+            return QtGui.QPixmap(image)
+        else:
+            return None
 
     def get_frame_pixmap(self):
         return self.convert_nparray_to_QPixmap(self.frames[self.frame]).scaled(640, 480, QtCore.Qt.KeepAspectRatio)
@@ -108,6 +122,9 @@ class MediaPlayer(QtCore.QThread):
         return qpixmap
 
     def join_pixmap(self, p1, p2, mode=QtGui.QPainter.CompositionMode_SourceOver):
+        if p2 is None:
+            return p1
+        print(p1.rect(), p2.rect())
         s = p1.size().expandedTo(p2.size())
         result = QtGui.QPixmap(s)
         result.fill(QtCore.Qt.transparent)
@@ -133,9 +150,9 @@ class VideoPlayer(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(VideoPlayer, self).__init__(parent)
 
-        fig, ax = plt.subplots(figsize=(32, 24), dpi=20, subplot_kw={"projection": "3d"})
-        #fig, ax = plt.subplots(figsize=(32, 24), dpi=20)
-
+        fig, ax = plt.subplots(figsize=(32, 24), dpi=20, frameon=False)
+        ax.axis('off')
+        ax = fig.add_axes([0, 0, 1, 1])
         self.mediaPlayer = MediaPlayer(self.frame_next_signal, self.frame_back_signal, self.pause_signal, fig, ax, self)
         self.mediaPlayer.pixmapChange.connect(self.set_pixmap)
         self.mediaPlayer.start()
@@ -157,17 +174,14 @@ class VideoPlayer(QtWidgets.QWidget):
             frames = []
             ret, img = video.read()
 
-            counter = 30
-            while ret and counter > 0:
-                counter -= 1
+            while ret:
                 frames.append(img)
                 ret, img = video.read()
             print("open_file : ", time.time() - t)
             self.mediaPlayer.set_video(frames)
+            print(len(frames))
             return frames
         return None
-
-
 
 
 class ParametersFrame(QtWidgets.QWidget):
@@ -225,50 +239,9 @@ class Console(QtWidgets.QTextEdit):
         self.append(text + '\n')
 
 
-class ProgressTracker:
-    progress = 0.0
-    state = "waiting"
-
-    def set_progress(self, value):
-        self.progress = value
-        if self.progress >= 1.0:
-            state = "waiting"
-
-    def get_progress(self):
-        return self.progress
-
-    def is_progressing(self):
-        if self.state == "progressing":
-            return True
-        else:
-            return False
-
-    def start(self):
-        self.state = "progressing"
-        self.progress = 0.0
-
-
-class ProcessThread(QtCore.QObject):
-    processList = []
-    progress_tracker = ProgressTracker()
-
-    def run(self):
-        while True:
-            if not self.progress_tracker.is_progressing():
-                self.progress_tracker.start()
-
-    def add_processes(self, processes):
-        for process in processes:
-            self.processList.append(process)
-
-
 class Processus(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Processus, self).__init__(parent)
-
-        self.function = None
-        self.parameters = None
-        self.return_name = None
 
         self.layout = QtWidgets.QGridLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -278,6 +251,22 @@ class Processus(QtWidgets.QWidget):
         self.name = QtWidgets.QLabel("temp")
         self.button = QtWidgets.QPushButton(">")
         self.parameterLayout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.name, 0, 0)
+        self.layout.addWidget(self.button, 0, 1)
+        self.layout.addLayout(self.parameterLayout, 1, 0, 2, 4)
+        self.layout.setColumnStretch(0, 3)
+        self.layout.setColumnStretch(1, 1)
+        self.layout.setRowStretch(0, 1)
+        self.layout.setRowStretch(1, 3)
+        self.is_local = True
+
+
+
+
+class ProcessusOpenFile(Processus):
+    def __init__(self, parent=None):
+        super(ProcessusOpenFile, self).__init__(parent)
+        self.parent = parent
 
         self.layout.addWidget(self.name, 0, 0)
         self.layout.addWidget(self.button, 0, 1)
@@ -287,41 +276,36 @@ class Processus(QtWidgets.QWidget):
         self.layout.setRowStretch(0, 1)
         self.layout.setRowStretch(1, 3)
 
-    def init_values(self, name, function, parameters, settings, return_name):
-        self.name.setText(name)
-        self.function = function
-        self.parameters = parameters
-        self.return_name = return_name
+        self.button.clicked.connect(self.tempdef)
+
+    def tempdef(self):
+        data['frames'] = self.parent.parent.videoFrame.open_file()
+        data['size'] = data['frames'][0].shape[:2]
+
+
+class ProcessusDetection(Processus):
+    def __init__(self, parent=None):
+        super(ProcessusDetection, self).__init__(parent)
+
+        self.layout.addWidget(self.name, 0, 0)
+        self.layout.addWidget(self.button, 0, 1)
+        self.layout.addLayout(self.parameterLayout, 1, 0, 2, 4)
+        self.layout.setColumnStretch(0, 3)
+        self.layout.setColumnStretch(1, 1)
+        self.layout.setRowStretch(0, 1)
+        self.layout.setRowStretch(1, 3)
+
         self.button.clicked.connect(self.start)
 
-        for setting in settings:
-            item_layout = QtWidgets.QHBoxLayout()
-            if setting[1] == "checkbox":
-                new_param = QtWidgets.QCheckBox(setting[0])
-                item_layout.addWidget(new_param)
-            elif setting[1] == "slider":
-                new_param = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
-                item_layout.addWidget(QtWidgets.QLabel(setting[0]))
-                item_layout.addWidget(new_param)
-            elif setting[1] == "textinput":
-                new_param = QtWidgets.QTextEdit()
-                item_layout.addWidget(new_param)
-            self.parameterLayout.addLayout(item_layout)
-
     def start(self):
-        params = []
-        for parameter in self.parameters:
-            if parameter not in data:
-                print("Function doesn't have all nescessary parameters to work")
-                return
-            params.append(data[parameter])
-        data[self.return_name] = self.function(*params)
+        data['detections'] = detect(data['frames'])
 
 
 class ProcessFrame(QtWidgets.QWidget):
     def __init__(self, logger, parent=None):
         super(ProcessFrame, self).__init__(parent)
         self.logger = logger
+        self.parent = parent
 
         # Window init
         self.layout = QtWidgets.QHBoxLayout(self)
@@ -338,16 +322,16 @@ class ProcessFrame(QtWidgets.QWidget):
         ]
         data["tempparam"] = "testingparameters"
         # Initialising all modules
-        self.fileProcess = Processus(self)
-        self.trackProcess = Processus(self)
-        self.trajProcess = Processus(self)
-        self.fileProcess.init_values("Load Video", parent.videoFrame.open_file, ["tempparam"], fileOpenParams, "frames")
-        self.trackProcess.init_values("Track", detect, ["frames"], [], "detects")
-        self.trajProcess.init_values("Extract Trajectory", extract, [], [], "")
+        self.fileProcess = ProcessusOpenFile(self)
+        self.trackProcess = ProcessusDetection(self)
+        self.trajProcess = ProcessusOpenFile(self)
 
         self.layout.addWidget(self.fileProcess)
         self.layout.addWidget(self.trackProcess)
         self.layout.addWidget(self.trajProcess)
+
+    def print_test(self):
+        print("ALO")
 
 
 class MainWindow(QtWidgets.QMainWindow):
