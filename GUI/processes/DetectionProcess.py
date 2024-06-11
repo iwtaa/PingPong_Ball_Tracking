@@ -1,7 +1,7 @@
 from processus import Processus
 from PyQt5 import QtWidgets
 import sys
-sys.path.append("../envTest")
+sys.path.append("../functions")
 
 from envTest.detection import detect
 

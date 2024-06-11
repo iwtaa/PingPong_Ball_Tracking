@@ -4,6 +4,7 @@ import time
 import cv2
 
 from GUI.visualisations.trajectoryVisualizer import TrajectoryVisualizer
+from GUI.visualisations.videoVisualizer import VideoVisualizer
 
 
 class MediaPlayer(QtCore.QThread):
@@ -19,6 +20,7 @@ class MediaPlayer(QtCore.QThread):
         frame_next_signal.connect(self.frame_next)
         frame_back_signal.connect(self.frame_back)
         pause_signal.connect(self.pause)
+        self.video_visualizer = VideoVisualizer(global_data)
         self.trajectory_visualizer = TrajectoryVisualizer(global_data)
         self.global_data = global_data
         self.time = time.time()

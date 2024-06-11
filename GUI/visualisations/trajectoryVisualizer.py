@@ -11,11 +11,12 @@ class TrajectoryVisualizer:
         self.ax = self.fig.add_axes([0, 0, 1, 1])
         self.global_data = global_data
 
-    def apply(self, data, current_frame, upto=-1):
+    def apply(self):
         self.ax.clear()
         xlist = [0, 0, 640, 640]
         ylist = [0, 480, 0, 480]
         if self.global_data.data['trajectory_history'] == 2:
+
             for frame in data:
                 if upto != -1 and upto < frame:
                     break

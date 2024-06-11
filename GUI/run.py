@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets, QtCore
 
 import matplotlib.pyplot as plt
 
-sys.path.insert(1, '/envTest')
+sys.path.insert(1, 'functions')
 sys.path.insert(1, '/')
 sys.path.insert(1, '/visualisations')
 
