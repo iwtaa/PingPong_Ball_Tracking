@@ -1,16 +1,17 @@
 # Ping Pong ball Detection
-Ici plusieurs methodes seront realise, evaluee, et compare, afin de pouvoir detecter une balle de ping pong dans une image.
-[Les differentes methodes sont explique ici](Methodes.md)
+This contains code for training, tuning and using a YOLOv8 detection model for tennis table balls. Aswell as a prototype GUI for the whole process.
 
-### Techniques utilise
--Detection d'objets : Yolov8, Detection de movement
--DeFMO
+### Content list
+- Compressed dataset, extracted, cropped, augmented (motionblur) from the ImageNet1k dataset
+- The scripts for the whole creation of the dataset
+- yolov_tune, for tuning the hyperparameters provided to the training afterward
+- yolov_train, for training a model on the dataset
+- yolov_image, for using the model on an image
+- yolov_video, for using the model on a video
 
 ## Dependencies
-- Numpy 1.26.4
-- scikit_image 0.23.2
-- opencv-python 4.9.0.80
-- torch 1.8.0
-- torchvision 0.18.0
+- Numpy
+- scikit_image
+- opencv-python
 - ultralytics
-- kornia 0.7.2
+- MatPlotLib
