@@ -8,29 +8,49 @@ from GUI.visualisations.videoVisualizer import VideoVisualizer
 
 
 class MediaPlayer(QtCore.QThread):
-    frames = []
+    frames = {}
     frame = 0
+    size = ()
+
     paused = True
     pixmapChange = QtCore.pyqtSignal(QtGui.QPixmap)
     time = 0.0
     outlast = 0.0
 
-    def __init__(self, global_data, frame_next_signal, frame_back_signal, pause_signal, parent=None):
+    def __init__(self, global_params, frame_next_signal, frame_back_signal, pause_signal, parent=None):
         super(MediaPlayer, self).__init__(parent)
         frame_next_signal.connect(self.frame_next)
         frame_back_signal.connect(self.frame_back)
         pause_signal.connect(self.pause)
-        self.video_visualizer = VideoVisualizer(global_data)
-        self.trajectory_visualizer = TrajectoryVisualizer(global_data)
-        self.global_data = global_data
+
+        self.global_params = global_params
+
+        self.trajectory_visualizer = TrajectoryVisualizer(self.global_params, self)
+
         self.time = time.time()
+
+    def draw_frame(self):
+        t = time.time()
+        temp = []
+
+        temp.append(self.draw_video())
+        temp.append(self.trajectory_visualizer.apply(
+            {'video_frames': self.frames, 'video_size': self.size, 'video_current_frame': self.frame}))
+
+        result = QtGui.QPixmap()
+        result.fill(QtCore.Qt.transparent)
+        for item in temp:
+            result = self.join_pixmap(result, item)
+
+        self.pixmapChange.emit(result)
+        print("Draw Frame : " + str(time.time() - t) + "ms")
 
     def run(self):
         while True:
             self.play()
 
     def play(self):
-        if self.paused:
+        if self.paused or self.frames is None:
             time.sleep(0.1)
         else:
             self.outlast += (time.time() - self.time) * 60
@@ -46,7 +66,6 @@ class MediaPlayer(QtCore.QThread):
             self.frame = value
             self.draw_frame()
         else:
-            self.pause()
             self.frame = 0
 
     def pause(self):
@@ -57,26 +76,23 @@ class MediaPlayer(QtCore.QThread):
             self.paused = True
 
     def frame_back(self):
+        if self.frames is None:
+            return
         self.paused = True
         if self.frame != 0:
             self.setFrame(self.frame - 1)
 
     def frame_next(self):
+        if self.frames is None:
+            return
         self.paused = True
         if self.frame != len(self.frames) - 1:
             self.setFrame(self.frame + 1)
 
-    def get_fx_pixmap(self):
-        if "detections" in self.global_data.data and "enable_trajectory_visualisation" in self.global_data.data and self.global_data.data["enable_trajectory_visualisation"] == 2:
-            return self.trajectory_visualizer.apply(self.global_data.data['detections'], self.frame, upto=self.frame)
-        else:
+    def draw_video(self):
+        if self.frames is None or self.global_params.data['video_visualisation'] == 0:
             return None
-
-    def get_frame_pixmap(self):
         return self.convert_nparray_to_QPixmap(self.frames[self.frame]).scaled(640, 480, QtCore.Qt.KeepAspectRatio)
-
-    def draw_frame(self):
-        self.pixmapChange.emit(self.join_pixmap(self.get_frame_pixmap(), self.get_fx_pixmap()))
 
     @staticmethod
     def convert_nparray_to_QPixmap(img):
@@ -129,6 +145,7 @@ class VideoPlayer(QtWidgets.QWidget):
 
         self.controlBar = QtWidgets.QWidget(self)
         self.controlBar.setLayout(QtWidgets.QHBoxLayout())
+        self.controlBar.layout().setAlignment(QtCore.Qt.AlignBottom)
 
         self.playButton = QtWidgets.QPushButton(">")
         self.nextFrame = QtWidgets.QPushButton("+")
@@ -153,11 +170,14 @@ class VideoPlayer(QtWidgets.QWidget):
     def open_file(self, value="no value"):
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Movie",
                                                             r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\footage_video")
+
         if fileName != '':
             video = cv2.VideoCapture(fileName)
             frames = []
             ret, img = video.read()
-            while ret:
+            counter = 25
+            while ret and counter != 0:
+                counter -= 1
                 frames.append(img)
                 ret, img = video.read()
             self.mediaPlayer.set_video(frames)

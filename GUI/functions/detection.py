@@ -8,8 +8,6 @@ from sort import Sort
 
 
 def detect(frames, progress_tracker=None):
-    print(frames)
-    print("DETECTING")
     model = YOLO(r'C:\Users\invite\Downloads\train259\weights\best.pt')
     tracker = Sort()
     result = {}

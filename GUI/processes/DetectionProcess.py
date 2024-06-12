@@ -1,35 +1,33 @@
-from processus import Processus
+from GUI.processus import Processus
 from PyQt5 import QtWidgets
-import sys
-sys.path.append("../functions")
 
-from envTest.detection import detect
+from GUI.functions.detection import detect
 
 import json
 
 
 class ProcessusDetection(Processus):
-    def __init__(self, globaldata, parent=None):
-        super(ProcessusDetection, self).__init__(parent)
-        self.setName("Detect")
+    def __init__(self, global_params, mediaPlayer, parent=None):
+        super(ProcessusDetection, self).__init__(global_params, mediaPlayer, parent)
+        self.setName("Detect and track")
         self.addControlButton("save", self.save)
         self.addControlButton("load", self.load)
-        self.globaldata = globaldata
-        self.addParameter("testing", "checkbox")
         self.addParameter("savepath", "text")
+
+        self.global_params.data['detections'] = None
 
     def start(self):
         self.done = True
-        self.globaldata.data['detections'] = detect(self.globaldata.data['frames'])
-        print(self.globaldata.data['detections'])
+        self.global_params.data['detections'] = detect(self.mediaPlayer.frames)
+        print(self.global_params.data['detections'])
 
     def save(self):
-        if "detections" not in self.globaldata.data:
+        if "detections" not in self.global_params.data:
             print("Detections results aren't loaded")
             return
         result = {}
-        for frame in self.globaldata.data['detections']:
-            for item in self.globaldata.data['detections'][frame]:
+        for frame in self.global_params.data['detections']:
+            for item in self.global_params.data['detections'][frame]:
                 x1, y1, x2, y2, item_id = item
                 if item_id not in result:
                     result[item_id] = []
@@ -40,13 +38,13 @@ class ProcessusDetection(Processus):
         json_object = json.dumps(result, indent=4)
 
         # Writing to sample.json
-        with open("saved_data\\" + self.savepath.text() + '.json', "w") as outfile:
+        with open("saved_data\\tracking\\" + self.savepath.text() + '.json', "w") as outfile:
             outfile.write(json_object)
 
     def load(self):
         result = {}
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open Movie",
-                                                            r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\GUI\saved_data")
+                                                            r"C:\Users\invite\PycharmProjects\PingPong_Ball_Tracking\GUI\saved_data\tracking")
         if fileName != '':
             with open(fileName) as f:
                 d = json.load(f)
@@ -56,5 +54,4 @@ class ProcessusDetection(Processus):
                         if frame['frame'] not in result:
                             result[frame['frame']] = []
                         result[frame['frame']].append([frame['x1'], frame['y1'], frame['x2'], frame['y2'], item])
-                self.globaldata.data['detections'] = result
-
+                self.global_params.data['detections'] = result

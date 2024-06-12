@@ -11,6 +11,7 @@ sys.path.insert(1, '/visualisations')
 from videoplayer import VideoPlayer
 from parameters import Parameters
 from visualisations.trajectoryParameters import TrajectoryParameters
+from visualisations.videoParameters import VideoParameters
 from GUI.processes.OpenVideoProcess import ProcessusOpenFile
 from GUI.processes.DetectionProcess import ProcessusDetection
 from globalData import Global
@@ -29,7 +30,7 @@ class Console(QtWidgets.QTextEdit):
 
 
 class ProcessFrame(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, mediaPlayer, parent=None):
         super(ProcessFrame, self).__init__(parent)
         self.parent = parent
 
@@ -41,13 +42,11 @@ class ProcessFrame(QtWidgets.QWidget):
 
         globalparams.data["tempparam"] = "testingparameters"
         # Initialising all modules
-        self.fileProcess = ProcessusOpenFile(globalparams, self)
-        self.trackProcess = ProcessusDetection(globalparams, self)
-        self.trajProcess = ProcessusOpenFile(globalparams, self)
+        self.fileProcess = ProcessusOpenFile(globalparams, mediaPlayer, self)
+        self.trackProcess = ProcessusDetection(globalparams, mediaPlayer, self)
 
         self.layout.addWidget(self.fileProcess)
         self.layout.addWidget(self.trackProcess)
-        self.layout.addWidget(self.trajProcess)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -59,9 +58,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Frames
         self.parametersFrame = Parameters(globalparams, self)
+        self.videoParameters = VideoParameters(globalparams, self.parametersFrame)
         self.trajectoryParameters = TrajectoryParameters(globalparams, self.parametersFrame)
         self.videoFrame = VideoPlayer(globalparams, self)
-        self.processFrame = ProcessFrame(self)
+        self.processFrame = ProcessFrame(self.videoFrame.mediaPlayer, self)
         self.videoFrame.setGeometry(15, 40, 640, 480)
         self.parametersFrame.setGeometry(670, 40, 209, 480)
         self.processFrame.setGeometry(15, 536, 864, 100)
@@ -75,16 +75,6 @@ class MainWindow(QtWidgets.QMainWindow):
         openfile_action = QtWidgets.QAction("Open File", self)
         openfile_action.triggered.connect(self.videoFrame.open_file)
         self.toolbar.addAction(openfile_action)
-
-    def keyPressEvent(self, e, **kwargs):
-        if e.key() == QtCore.Qt.Key_E:
-            self.videoFrame.pause_signal.emit()
-        elif e.key() == QtCore.Qt.Key_R:
-            self.videoFrame.open_file()
-        elif e.key() == QtCore.Qt.Key_D:
-            self.videoFrame.frame_back_signal.emit()
-        elif e.key() == QtCore.Qt.Key_F:
-            self.videoFrame.frame_next_signal.emit()
 
 
 if __name__ == "__main__":

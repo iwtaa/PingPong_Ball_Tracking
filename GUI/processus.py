@@ -2,11 +2,14 @@ from PyQt5 import QtWidgets, QtCore
 
 
 class Processus(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, global_params, mediaPlayer, parent=None):
         super(Processus, self).__init__(parent)
 
         self.done = False
         self.setInitialLayout()
+
+        self.global_params = global_params
+        self.mediaPlayer = mediaPlayer
 
         self.is_local = True
 

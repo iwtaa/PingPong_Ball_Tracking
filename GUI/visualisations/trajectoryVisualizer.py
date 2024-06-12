@@ -1,51 +1,40 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from PyQt5 import QtGui
+from PyQt5 import QtGui, QtCore
 
 
 class TrajectoryVisualizer:
-    def __init__(self, global_data):
+    def __init__(self, global_params, parent=None):
         self.fig, self.ax = plt.subplots(figsize=(32, 24), dpi=20, frameon=False)
         self.ax.axis('off')
         self.ax = self.fig.add_axes([0, 0, 1, 1])
-        self.global_data = global_data
+        self.global_params = global_params
 
-    def apply(self):
+    def apply(self, data):
+        if self.global_params.data['trajectory_visualisation'] == 0 or self.global_params.data['detections'] is None:
+            return None
+
         self.ax.clear()
-        xlist = [0, 0, 640, 640]
-        ylist = [0, 480, 0, 480]
-        if self.global_data.data['trajectory_history'] == 2:
+        xlist = []
+        ylist = []
 
-            for frame in data:
-                if upto != -1 and upto < frame:
+        if self.global_params.data['trajectory_history'] == 2:
+            for frame in self.global_params.data['detections']:
+                if frame > data['video_current_frame']:
                     break
-                for detected_object in data[frame]:
-                    x1, y1, x2, y2, object_id = detected_object
-                    h = y2 - y1
-                    w = int(x2 - x1)
-                    y = int(y1 + w / 2)
-                    x = int(x1 + h / 2)
-                    ho, wo = self.global_data.data['size']
-                    xfinal = int(x * 640 / wo)
-                    yfinal = int(y * 360 / ho)
-                    xlist.append(xfinal)
-                    ylist.append(yfinal)
+                for detected_object in self.global_params.data['detections'][frame]:
+                    x, y = self.object_to_point(detected_object, data['video_size'])
+                    xlist.append(x)
+                    ylist.append(y)
         else:
-            for detected_object in data[current_frame]:
-                x1, y1, x2, y2, object_id = detected_object
-                h = y2 - y1
-                w = int(x2 - x1)
-                y = int(y1 + w / 2)
-                x = int(x1 + h / 2)
-                ho, wo = self.global_data.data['size']
-                xfinal = int(x * 640 / wo)
-                yfinal = int(y * 360 / ho)
-                xlist.append(xfinal)
-                ylist.append(yfinal)
+            for detected_object in self.global_params.data['detections'][data['video_current_frame']]:
+                x, y = self.object_to_point(detected_object, data['video_size'])
+                xlist.append(x)
+                ylist.append(y)
         X = np.array(xlist)
         Y = np.array(ylist)
-        plt.scatter(X, Y, s=self.global_data.data['trajectory_dot_size'], c='cyan')
+        plt.scatter(X, Y, s=self.global_params.data['trajectory_dot_size'], color=(0, 0, 1))
         plt.ylim(0, 480)
         plt.xlim(0, 640)
         plt.gca().invert_yaxis()
@@ -56,4 +45,16 @@ class TrajectoryVisualizer:
         canvas.draw()
         image = QtGui.QImage(canvas.buffer_rgba(), canvas.size().width(), canvas.size().height(),
                              QtGui.QImage.Format_ARGB32)
-        return QtGui.QPixmap(image)
+        return QtGui.QPixmap(image).scaled(640, 480, QtCore.Qt.KeepAspectRatio)
+
+    @staticmethod
+    def object_to_point(object, size):
+        x1, y1, x2, y2, object_id = object
+        h = y2 - y1
+        w = int(x2 - x1)
+        y = int(y1 + w / 2)
+        x = int(x1 + h / 2)
+        ho, wo = size
+        xfinal = int(x * 640 / wo)
+        yfinal = int(y * 360 / ho)
+        return xfinal, yfinal
